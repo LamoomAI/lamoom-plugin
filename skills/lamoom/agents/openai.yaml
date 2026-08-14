@@ -1,0 +1,12 @@
+interface:
+  display_name: "Lamoom"
+  short_description: "Run Lamoom loops, workflows, and judges"
+  default_prompt: "Use $lamoom to manage a Lamoom loop or workflow."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "lamoom"
+      description: "Lamoom MCP server for loops, workflows, judges, files, steps, and email tools"
+      transport: "http"
+      url: "https://console.lamoom.com/mcp"

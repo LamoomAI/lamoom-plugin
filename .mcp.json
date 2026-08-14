@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lamoom": {
+      "type": "http",
+      "url": "https://console.lamoom.com/mcp"
+    }
+  }
+}

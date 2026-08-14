@@ -1,0 +1,37 @@
+{
+  "name": "lamoom",
+  "version": "1.0.0",
+  "description": "Run somebody else's way of working, judged until it is good.",
+  "author": {
+    "name": "Lamoom",
+    "url": "https://lamoom.com"
+  },
+  "homepage": "https://lamoom.com",
+  "license": "MIT",
+  "keywords": [
+    "loops",
+    "workflows",
+    "judges",
+    "mcp",
+    "agents"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Lamoom",
+    "shortDescription": "Run Lamoom loops, workflows, and judges.",
+    "longDescription": "Lamoom gives your agent a skill and an MCP connection for persisted loops, workflow steps, reasoning logs, files, judges, result review, and email.",
+    "developerName": "Lamoom",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://lamoom.com",
+    "defaultPrompt": [
+      "Use Lamoom to create a workflow for this task.",
+      "Use Lamoom to review this workflow with judges.",
+      "Use Lamoom to manage loop files and steps."
+    ]
+  },
+  "mcpServers": "./.mcp.json"
+}
