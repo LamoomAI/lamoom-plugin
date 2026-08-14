@@ -1,0 +1,18 @@
+{
+  "name": "lamoom",
+  "version": "1.0.0",
+  "description": "Run somebody else's way of working, judged until it is good.",
+  "author": {
+    "name": "Lamoom",
+    "url": "https://lamoom.com"
+  },
+  "homepage": "https://lamoom.com",
+  "license": "MIT",
+  "keywords": [
+    "loops",
+    "workflows",
+    "judges",
+    "mcp",
+    "agents"
+  ]
+}

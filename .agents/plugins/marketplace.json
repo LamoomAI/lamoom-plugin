@@ -1,0 +1,20 @@
+{
+  "name": "lamoom",
+  "interface": {
+    "displayName": "Lamoom"
+  },
+  "plugins": [
+    {
+      "name": "lamoom",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "name": "lamoom",
+  "owner": {
+    "name": "Lamoom",
+    "url": "https://lamoom.com"
+  },
+  "plugins": [
+    {
+      "name": "lamoom",
+      "source": "./plugins/claude",
+      "description": "Run somebody else's way of working, judged until it is good."
+    }
+  ]
+}
