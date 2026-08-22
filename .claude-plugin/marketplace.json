@@ -4,6 +4,7 @@
     "name": "Lamoom",
     "url": "https://lamoom.com"
   },
+  "description": "The Lamoom plugin lives here. It carries the /lamoom skill and the connector at console.lamoom.com/mcp, so an agent can run apps from lamoom.com and publish loops of its own.",
   "plugins": [
     {
       "name": "lamoom",
