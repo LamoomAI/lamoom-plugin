@@ -314,6 +314,21 @@ Never start from what is easy or from what the tools happen to offer.
 Say the end in one line before you work: `# end: {observable result}`. Put it in
 `log_reasoning` when the step is bigger than one file.
 
+**Step 0 comes back from the server.** Every plan opens on it, whatever the
+loop's author wrote — `outline`, four step-tasks, labelled `0`, before step 1:
+
+```
+0.1 end_state    the run's end state in one line, observable
+0.2 proof        the one check that says it is real
+0.3 walk_back    each move before that proof, until a move needs nothing
+0.4 first_move   the last one derived is the first one you make -> outline.md
+                 plan disagrees with the walk? fix the plan, then step 1
+```
+
+Report it like any other step (`report_step_task`, `reasoning` = the walk
+itself). Never skip it to "get started" — that is the thing it exists to stop.
+The mirror of it is the close every run ends on (§4).
+
 ## 4. Follow `next`
 
 Every response carries a `next` field. It is the server telling you the one
