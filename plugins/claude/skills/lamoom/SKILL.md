@@ -187,9 +187,28 @@ manage_workflow action=create public_loop_id={plid}
 Pass your own `workflow_id` to make it safe to retry. The same id returns the
 same run instead of starting a second one.
 
-The response hands you the app's README.md, its steps, its judges,
-`customization_files` and `to_fill`. Follow that README.md as if it were your
-own project's.
+The response hands you the app's README.md, its judges,
+`customization_files`, `to_fill`, and two things worth reading before you touch
+anything:
+
+- **`plan`** — EVERY step of this run, in order, with its step-tasks and their
+  status. Step 0 is the backward walk (§3d) and it is first. `working_on` points
+  at where to start; `progress` counts what is left.
+- **`flow`** — the whole cycle, stage 1 to stage 7, so you never have to work out
+  where you are from a single `next` hint:
+
+```
+1 find      manage_loop action=find                -> the loops that fit
+2 create    manage_workflow action=create          -> the full plan + this flow
+3 work      manage_steps action=report_step_task   -> the ONE next step-task
+4 finish    the last step-task                     -> submit the result
+5 judge     judge_result action=tasks -> submit    -> the judges, then the verdict
+6 below     a failing verdict                      -> next iteration, the WHOLE
+                                                      plan back to todo, from step 0
+7 above     judge_result action=finalize           -> mailed, result ATTACHED
+```
+
+Follow that README.md as if it were your own project's.
 
 ## 3a. Write the brief, then start
 
@@ -327,7 +346,25 @@ loop's author wrote — `outline`, four step-tasks, labelled `0`, before step 1:
 
 Report it like any other step (`report_step_task`, `reasoning` = the walk
 itself). Never skip it to "get started" — that is the thing it exists to stop.
-The mirror of it is the close every run ends on (§4).
+
+**The close comes back from the server too.** The mirror of step 0, last in
+every plan, whatever the author wrote:
+
+```
+submit     judge_result action=submit, EVERY judge scored, one fresh session each
+verdict    passed -> finalize; failed -> iterate and work the plan again
+deliver    send_email the result, the FILE ATTACHED, never retyped into the body
+mistakes   every wrong turn this run took, appended to the user-library file
+           named in `user_files` — one line each
+insights   what you learned about the USER — their answers, corrections,
+           preferences — appended to the user-library file in `user_files`
+```
+
+The last two are what a run owes the next one. A run that only delivers leaves
+the same wrong turn to be taken again and the same question to be asked of the
+same person a third time. `user_files` arrives with the step-task itself and
+lists every file already in that library — write to one of those paths before
+inventing a new one.
 
 ## 4. Follow `next`
 
@@ -343,6 +380,7 @@ legal next move. Follow it. Never stop because a step looked finished.
 | record why you did something | `log_reasoning` |
 | submit for judging | `judge_result action=submit` |
 | close the run | `judge_result action=finalize` |
+| leave the lesson behind | `manage_file action=put scope=user` — the paths in `user_files` |
 
 A run is done only when every judge passes the app's bar and you finalize. A
 failed round opens the next one automatically. Keep going. The bar belongs to
@@ -360,9 +398,12 @@ judge_result action=submit iteration={n} scores=[EVERY judge]
 
 judge_result action=iterate workflow_id={wid} target_ref={the file being judged}
     -> copies it into iterations/{n+1}/ and carries the failing judges forward
+    -> and the WHOLE plan is already back to todo, from step 0
 
-fix that copy: one edit per failing judge, plus the upstream file that caused it
-(a bad email body usually means a bad source file)
+work the plan again from the first step, reporting each step-task as you go.
+Each step's `history` holds what the failed round did and why. Where the judges
+faulted the PLAN rather than the file, change the plan (plan_step / insert_step)
+instead of redoing the same steps.
 
 judge_result action=submit iteration={n+1} scores=[EVERY judge, re-scored]
     passed=false -> iterate again. No new question
