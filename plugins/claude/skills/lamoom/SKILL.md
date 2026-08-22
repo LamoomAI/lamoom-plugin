@@ -31,17 +31,13 @@ You work out which app is meant. Answer with a running app. Never ask, never
 show a menu. If there are no Lamoom tools at all, go to §1 and say so.
 
 ```
-manage_workflow action=list
-  ├─ a run is open (not finalized)  -> that is the answer.
-  │                                    manage_steps action=list -> follow `next`
-  └─ nothing open                   -> read the case off the last few turns:
-                                       the thing they were just working on
+read the case off the last few turns: the thing they were just working on
 
 manage_loop action=find query={that case, in their own words}
   ├─ used[] has a match  -> take the server's `pick`. Run it.
   └─ used[] empty        -> the top of catalog[]. Run it.
 
-no open run and nothing to read off the conversation:
+nothing to read off the conversation:
 manage_loop action=find            (no query)
   -> the top of used[]: pinned first, then most-run, then best-rated. Run it.
 ```
@@ -52,7 +48,7 @@ then work §4.
 
 | Rule | |
 |---|---|
-| Finish before you start | an open run beats a new one, even if they just mentioned something else. Continue it, or say in one clause that you are leaving it |
+| Always a new run | never look for an open one. Create a new run every time, unless they say continue or resume |
 | Name the pick in one clause | "Running Daily News — the one you run most." Then go |
 | Never ask which | not public or private, not which setup, not which judges. You pick the judges too |
 | Never shop | if `used[]` matched, do not read the catalog |
@@ -80,7 +76,6 @@ Read their own shelf before the catalog.
 ```
 requirement
   │
-  ├─ manage_workflow list ─── open run on it? ──> resume it, §4
   ├─ manage_loop list ─────── loops they OWN ─┐
   ├─ manage_loop find q="…" ─ used[], RAN ────┴─> best fit ──> run it
   │       fit = alias/when_to_use > pinned > same OUTPUT shape > same input
@@ -293,6 +288,31 @@ nothing submitted.
 | check after the kill | a session a minute late still wrote the file. Look again before saying it returned nothing |
 | two silent in a row | stop launching. Say so and finish inline |
 | no probe file | nested sessions do not work here. Say so in one line, then work inline |
+
+## 3d. Think backward
+
+Every step, every file, every judge round starts at the end and walks back.
+Never start from what is easy or from what the tools happen to offer.
+
+```
+1  END      what exists when this step is DONE, observable
+            "the email is in their drafts", not "work on the email"
+2  PROOF    the check that says so: a file at a path, a score, a link
+3  BACK     what must be true one move before the proof passes?
+            repeat until a move needs nothing
+4  START    the last move you derived is the first one you make
+```
+
+| Case | Backward move |
+|---|---|
+| a step task | name its output file before writing a line |
+| the brief | write the delivery the runner sees, then what earns it |
+| a failing judge | start at the score, walk back to the file that caused it |
+| building a loop | write the last step first, then what feeds it |
+| a deadline | count back from the date, never forward from today |
+
+Say the end in one line before you work: `# end: {observable result}`. Put it in
+`log_reasoning` when the step is bigger than one file.
 
 ## 4. Follow `next`
 
