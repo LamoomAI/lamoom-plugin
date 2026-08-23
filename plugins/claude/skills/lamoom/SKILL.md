@@ -76,25 +76,33 @@ Only a different output shape sends you off their shelf. "Not perfect" is not
 
 ## 1. Connect once
 
+Send them one url. **https://lamoom.com/setup?get=claude_code** opens on the
+client they are in and hands them the one line for it.
+
+Lamoom ships as a PLUGIN. The plugin carries `/lamoom` and the connector
+together, so there is no second step and nothing to keep in sync.
+
 Claude Code:
 
 ```
+claude plugin marketplace add LamoomAI/lamoom-plugin
+claude plugin install lamoom@lamoom
+```
+
+Restart, then `/lamoom`. Sign-in is Google or email, asked once by the
+connector.
+
+Codex: Settings → Plugins → Add marketplace →
+`https://github.com/LamoomAI/lamoom-plugin`.
+
+claude.ai and ChatGPT install nothing from a terminal: Settings → Connectors →
+Add custom connector → `https://console.lamoom.com/mcp` → sign in.
+
+The connector on its own, for a client that installs no plugin at all:
+
+```
 claude mcp add lamoom --transport http https://console.lamoom.com/mcp
-```
-
-Then run `/mcp` once to sign in. Sign-in is Google or email.
-
-claude.ai: Settings → Connectors → Add custom connector → URL
-`https://console.lamoom.com/mcp` → sign in.
-
-ChatGPT: Settings → Connectors → Add custom connector → same URL →
-authenticate in the browser. Then ask ChatGPT to use the Lamoom connector.
-
-Codex:
-
-```
-codex mcp add lamoom --url https://console.lamoom.com/mcp
-codex mcp login lamoom
+codex mcp add lamoom --url https://console.lamoom.com/mcp && codex mcp login lamoom
 ```
 
 Lamoom's server handles OAuth discovery and client registration itself. Do not
