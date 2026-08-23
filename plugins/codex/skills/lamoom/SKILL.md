@@ -9,22 +9,6 @@ A Lamoom **app** is a loop someone else built and published. It has a README.md,
 a list of steps, and a panel of judges. You run it. The platform saves the run,
 the files, the reasoning log and the judge scores in the runner's account.
 
-## Where this works
-
-One skill and one MCP server, `https://console.lamoom.com/mcp`, behind every
-agent below. Runs, files and scores land in one account, whichever agent you ran
-from.
-
-| Platform | Install |
-|---|---|
-| Claude Code | `lamoom-claude-plugin.zip`, or `claude mcp add` (§1) |
-| Claude.ai | `lamoom.skill` in Settings → Skills, plus a custom connector (§1) |
-| ChatGPT | a custom connector on the same URL (§1) |
-| Codex | `lamoom-codex-plugin.zip`, or `codex mcp add` (§1) |
-| any other MCP client | `lamoom-plugin.zip` |
-
-Every bundle is at `https://lamoom.com/downloads/`.
-
 ## 0. `/lamoom` with nothing after it
 
 You work out which app is meant. Answer with a running app. Never ask, never
