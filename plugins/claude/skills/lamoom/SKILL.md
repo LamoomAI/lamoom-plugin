@@ -218,7 +218,7 @@ manage_customization action=write file=key_role.md content=<the whole file>
 ```
 
 Write it from what the user just said, their other setups and their library. One
-pass. No questions and no interview. The `template` in `to_fill` is the shape.
+pass, no interview. The `template` in `to_fill` is the shape.
 Fill every heading. A half-filled brief is worse than none, because the run
 reads the gaps as deliberate and invents around them.
 
@@ -358,6 +358,28 @@ same person a third time. `user_files` arrives with the step-task itself and
 lists every file already in that library — write to one of those paths before
 inventing a new one.
 
+## 3e. Say what you assumed. Never ask.
+
+Every choice you made for them gets one clause in the open. A question in its
+place stops the run. A hidden choice is unreadable the day it is wrong.
+
+| Chosen for them | The clause |
+|---|---|
+| which app | "Running Daily News — the one you run most." |
+| what the brief says | "Wrote key_role.md from your last two runs. Edit it any time." |
+| which judges | "Panel: {the names}." |
+| a fork inside a step | "Took {A} over {B}: {the one reason}." |
+
+```
+uncertain, and nothing you can read settles it
+  ├─ the run works either way   -> state the assumption, keep going
+  └─ nothing works without it   -> take the likeliest, mark it NOT SURE in the
+                                   delivery, finish the run anyway
+```
+
+At the end of the turn, never mid-run. Never "want me to…", "should I…",
+"which would you prefer".
+
 ## 4. Follow `next`
 
 Every response carries a `next` field. It is the server telling you the one
@@ -380,9 +402,8 @@ the app's author, not to you.
 
 ### A failing judge is not a stopping point
 
-Do not stop. Make another iteration. Never write "want me to continue?" or
-"should I revise?" after a failed round. Asking is the failure. If the turn ran
-long, pick the last `next` back up and continue.
+Do not stop. Make another iteration. Asking after a failed round is the failure
+(§3e). If the turn ran long, pick the last `next` back up and continue.
 
 ```
 judge_result action=submit iteration={n} scores=[EVERY judge]
@@ -500,6 +521,17 @@ Then say the path. If the user asks "where's the output?", it was not obvious.
    here. Only code they asked you to change goes in their project.
 8. **Secrets never live in the workspace.** Keys stay in their env file, named by
    `secrets_env_file`.
+
+**Editing what already exists.** A run that opens the user's own files changes
+only what the requirement names. §6.0 deletes generously — that is for files the
+loop itself wrote, never for theirs.
+
+| | |
+|---|---|
+| Every changed line traces to the requirement | cannot name the clause that asked for it? revert it |
+| Match the file's style | including where yours is better |
+| Adjacent mess stays | name it in one clause, leave it standing |
+| Clean up your own orphans only | the import your edit stranded goes. Dead code that was already there stays |
 
 ## 5b. How much to write
 
@@ -664,16 +696,8 @@ truth. When they disagree the files win, and the step plan gets corrected. A
 step marked done whose output file does not exist was never done.
 
 **8. Run it in a fresh session.** The session that built the loop will paper over
-its gaps.
-
-```
-claude -p "Run the Lamoom loop {loop_id}: manage_workflow action=create loop_id={loop_id},
-then follow every `next` field until finalize. Report what was ambiguous." \
-  --permission-mode acceptEdits \
-  --allowedTools "mcp__Lamoom,mcp__claude-in-chrome,WebFetch,WebSearch,Read,Write,Edit,Glob,Grep"
-```
-
-Drop `mcp__claude-in-chrome` if the loop does no browsing.
+its gaps. Launch it exactly as §3c does, with the prompt: create the workflow on
+`loop_id`, follow every `next` until finalize, report what was ambiguous.
 
 **9. Check the artifacts, not the transcript.** `manage_file action=list` the
 output paths. An empty folder with a confident summary is a failed run.
