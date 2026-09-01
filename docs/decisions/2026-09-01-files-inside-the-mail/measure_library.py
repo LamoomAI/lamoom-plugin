@@ -21,4 +21,5 @@ print("over 7MB            ", sum(1 for _, s in ok if s > 7*1048576))
 print("over 1MB            ", sum(1 for _, s in ok if s > 1048576))
 print("folders             ", len(folders))
 print("folders over 10 files", sum(1 for _, v in folders.items() if v > 10))
-print("more pages          ", bool(d.get("next")))
+# NB: the listing's "next" field is a prose instruction to the agent, not a pagination cursor.
+# Whether 1560 files is the whole library is therefore unknown from this output.

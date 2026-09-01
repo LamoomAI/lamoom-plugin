@@ -2,25 +2,28 @@
 
 ## Measured, on Kate's own library
 
-The one page of her library the console handed me, measured — not estimated:
+What one `list` call returned, measured — not estimated:
 
     manage_file action=list scope=user   -> library_listing.json
     python3 measure_library.py
 
     files listed         1560
     total               318.2 MB
+    average per file    210 KB
     largest             41.3 MB  motion-video/videos/2026-08-07_lamoom-in-colour/cuts/v1.mp4
     over 7MB             11
     over 1MB             36
     folders              322
     folders over 10 files 14
-    more pages          True
 
-`more pages True` means this is one page, so every count is a floor, not a total.
+**Whether that is her whole library is unknown.** An earlier version of this file said "more pages
+True" and called every count a floor. That came from reading the listing's `next` field as a
+pagination cursor, and it is not one — it is a prose instruction to the agent. So these are the
+counts one call returned, and nothing here says whether more exists.
 
 **What that measurement decides.** The `send_email` limits — 10 files, 7MB — are not
-theoretical. 11 files in one page of her library can never be attached, and 14 of her 322
-folders hold more than ten files. So an option that only attaches is an option that cannot
+theoretical. 11 of those files can never be attached, and 14 of the 322 folders hold more than
+ten files. So an option that only attaches is an option that cannot
 deliver a `motion-video` result at all. `{{link:path}}` is not the polite third form: it is the
 only form that works for the biggest thing Lamoom makes.
 
@@ -28,17 +31,23 @@ only form that works for the biggest thing Lamoom makes.
 
 | What happens | How many | Unit price (AWS list, not measured here) |
 |---|---|---|
-| one read per reference, to prove the path and take the bytes | N, and N is 1 to 5 in a normal mail | S3 GET, $0.0004 per 1,000 requests |
-| bytes out of S3 into the mail | the attached files only | same region, no egress charge |
+| one `stat` per distinct path | every reference, `{{link:}}` included | S3 HEAD, $0.0004 per 1,000 |
+| one `fetch` per path that becomes a part | the attached and inline ones only, never a link | S3 GET, $0.0004 per 1,000 |
+| the resolver's own compute | none extra — it runs inside the lambda that was already handling the call | $0 |
+| bytes out of S3 into the mail | the parts only | same region, no egress charge |
 | one mail | 1 | SES, $0.10 per 1,000 mails, plus $0.12 per GB of attachment |
+
+Both sides are counted the same way below: option 1 does a HEAD plus a GET per part inside a
+lambda that is already running; option 2 does a `manage_file get` per reference, which is a fresh
+lambda invocation, a DynamoDB read and a network hop each.
 
 **The per-send figure, computed.** A mail with three references, one of them a 200KB picture:
 
-    3 GETs        3 x $0.0004/1000                    = $0.0000012
+    3 HEADs + 1 GET  4 x $0.0004/1000                 = $0.0000016
     1 send        $0.10/1000                          = $0.0001
     200KB out     0.0002 GB x $0.12/GB                = $0.000024
     ----------------------------------------------------------------
-    total                                             = $0.000125
+    total                                             = $0.000126
 
 So about **one eightieth of a cent**, and the send is 80% of it.
 
@@ -50,7 +59,9 @@ bill; only the file sizes come from a measurement, and even those are a stand-in
 paragraph).
 
 **At 100x, with the byte term carried and not dropped.** A hundred finished runs a day, three
-references each, at 210KB apiece:
+references each, at 210KB apiece. *(Today's volume is not measured anywhere here — only the
+library is — so "100x" is a round number for "far more than one person generates", not a multiple
+of a measured figure. Nothing below depends on which it is: the total is cents either way.)*
 
     100 sends            100 x $0.10/1000              = $0.0100 / day
     300 GETs             300 x $0.0004/1000            = $0.00012 / day

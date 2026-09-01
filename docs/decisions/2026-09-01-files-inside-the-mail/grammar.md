@@ -74,23 +74,37 @@ turns that piece into an `<img>` with a `cid:`; another surface turns it into wh
 
 ## Is it an image?
 
-From the content type the store holds for that path. If the store has none, from the last
-segment's extension: `.png .jpg .jpeg .gif .webp`. If neither says image, the file is **attached
-instead**, and the caller is told it was attached rather than placed. This is not a judgement the
-caller could have made better — the caller does not hold the bytes.
+From the content type the store holds, and from the last segment's extension —
+`.png .jpg .jpeg .gif .webp` — whenever the store has no content type or answers a generic one
+like `application/octet-stream`. If neither says image, `{{inline:path}}` is **refused**, reason
+`not an image`, fix: use `{{path}}` to attach it.
+
+**It refuses rather than quietly attaching, and that reversal is the point.** An earlier draft
+demoted a non-image inline to an attachment and put a note in the return. But the note goes to the
+agent that sent the mail, which stops existing minutes later, while the person reads the mail
+after that — which is the exact argument this design uses to refuse an expiring link rather than
+warn about it. Applying it in one place and not the other was inconsistent, and the silent
+demotion was the last failure that still reached Kate without anyone being told.
+
+That deleted the `notes` channel, which had no other user. `plan` returns `Plan(pieces, parts)`.
+
+> **`content_type` is as unread as `expires_at`.** Nothing this session could read says `stat`
+> returns it. It gets the same treatment: **build step 1 checks both.** If the store answers a
+> generic type for everything PUT into it, the extension fallback is what actually decides, which
+> is why the fallback runs on a generic answer and not only on a missing one.
 
 ## The seam, in three functions
 
     find_references(body)                        -> [ (span, form, path) ]
     plan(references, facts, limits, extra_files) -> Plan | Refusal
-    render_for_mail(plan, fetch)                 -> (body, attachments, inline, notes)
+    render_for_mail(plan, fetch)                 -> (body, attachments, inline)
 
     facts       -> { path: (exists, size, content_type, expires_at) },   gathered by the host
     limits      -> (max_parts, max_total_bytes)
     extra_files -> the paths passed in `files=[…]`, or empty
     fetch(path) -> bytes
 
-    Plan(pieces, parts, notes)   pieces: text and part-markers in order; parts: paths to carry
+    Plan(pieces, parts)          pieces: text and part-markers in order; parts: paths to carry
     Refusal(reference, path, reason, where, fix)
 
 **`find_references` and `plan` together are the whole design; `render_for_mail` is a join.** The
@@ -100,11 +114,16 @@ fallback, the expiry refusal, and the five fields a refusal carries. Both are pu
 out, no store, no network, no mail. The third fetches the bytes the plan names and builds MIME,
 and it is the only part that knows it is making a mail.
 
-That split is the point. A second surface — a Slack post, a webhook, a studio preview — reuses
-`find_references` **and `plan`**, and writes only its own renderer. An earlier draft put the
-policy inside the mail renderer and shared only the tokenizer; then the reusable piece was a
-regex and every rule that matters was copy-pasted per host. The conformance fixture below covers
-`find_references` and `plan`, which is why it is a mechanism rather than a gesture.
+**What the split is for, said without overclaiming.** It is not surface-neutrality. `plan` takes
+`extra_files`, which exists only because console `send_email` has a `files?` argument, and
+`limits`, which is a message size cap — its whole body is mail policy, and a webhook would inherit
+rules that are inert there. The genuinely reusable piece is `find_references`, and that is all.
+
+The split earns its keep for two other reasons. First, `plan` is pure, so every rule that can put
+a hole in an inbox is testable with a dictionary and a table instead of a mail server. Second,
+that is what lets the conformance fixture bind the rules rather than the tokenizer — an earlier
+draft shared only `find_references`, which is a regex, and left the caps, the precedence, the
+fallback and the expiry refusal copy-pasted per host.
 
 Four things this shape exists to make possible, each of which an earlier draft claimed and could
 not do:
@@ -115,8 +134,8 @@ not do:
   `{{link:}}` never pulls a 41.3 MB video just to prove it exists.
 - **`limits` and `extra_files` are arguments to `plan`,** so the caps have somewhere to live and
   `files=[…]` is counted in the same total instead of being counted by nobody.
-- **`notes` comes out of `plan`,** so "this was attached instead of placed" has a channel and is
-  decided in the shared, tested half rather than per host.
+- **`plan` is where a refusal is decided,** not the renderer, so every rule that can stop a send
+  is in the pure, fixture-pinned half.
 
 The host gathers `facts` — one stat per distinct path — because the four-step search a
 `manage_file` read does (run, then loop, then the library, then customizations) is the caller's
@@ -128,9 +147,18 @@ suite is a dictionary and a table.
 One checked-in file of cases, each `(body, facts, limits, extra_files) -> (plan | refusal)`. Both
 hosts run it in their own suites. Two implementations that pass the same fixture are the same
 grammar and the same policy; one that stops passing it fails its own build rather than surfacing
-in somebody's inbox. It covers `find_references` and `plan` — everything except the join — and it
-is written whether or not the two services end up sharing a library, because it is what makes
-"one grammar" checkable instead of asserted.
+in somebody's inbox. It is written whether or not the two services end up sharing a library,
+because it is what makes "one grammar" checkable instead of asserted.
+
+**A second fixture pins the join**, because `render_for_mail` is the piece written twice if the
+hosts share nothing, and it owns the `gone or resized between stat and fetch` refusal. Its cases
+are `(plan, a fetch stub) -> (body, parts)`, and the stub is what makes "the file changed" a case
+you can write rather than a race you hope to see.
+
+**Where `render_for_mail` sits.** It emits **markdown**, not HTML: an ordinary markdown image
+whose target is the part's `cid:` URL. The existing markdown-to-branded-HTML renderer runs after
+it, unchanged, exactly as it does for a body with no references in it. Nothing new emits HTML, so
+A3 holds.
 
 > **The one capability this design assumes and did not read.** `expires_at` on `stat`. The store
 > holds retention — `manage_file` takes `expire_in` on writes and has `set_expiry` — but nothing
@@ -151,8 +179,7 @@ is written whether or not the two services end up sharing a library, because it 
   `render_for_mail` joins them with `cid:`; another surface joins them its own way. An earlier
   draft returned a body containing `![name](inline:{n})`, which was the same defect `cid:` was
   disqualified for, one rename away.
-- **The non-image fallback** puts `name` in the body — exactly what `{{path}}` does — and adds a
-  note saying it was attached rather than placed.
+- **`{{inline:}}` on something that is not an image** is refused, not demoted. See *Is it an image?*
 - **A path in both `files=[…]` and `{{path}}`** is one part. The `{{path}}` token still leaves its
   name in the body; a `files=[…]` entry leaves nothing, because it was never in the body. So
   `files=[…]` is the older, positionless way to attach, and it is not the same thing as `{{path}}`
@@ -174,6 +201,35 @@ is written whether or not the two services end up sharing a library, because it 
 - **The expiring-link rule is `expires_at` is not null**, not a window. A file with any retention
   set is a file that will be gone; when it goes is not the point.
 
+## Writing the link, when the name has spaces in it
+
+The character set admits spaces, parentheses and brackets, so the output side has to say what it
+does with them or `Q3 report.png` produces broken markdown:
+
+- the URL is `https://studio.lamoom.com/` + the path **percent-encoded per segment**, and the
+  target is wrapped in angle brackets — `[Q3 report.png](<https://studio.lamoom.com/2026/Q3%20report.png>)`;
+- in the visible name, `[`, `]` and a backslash are backslash-escaped.
+
+## What the caps are measured on
+
+`limits.max_total_bytes` is a budget in **raw** bytes, and the host derives it from the mail
+service's message limit before calling — divide by 1.37 for base64, leave room for headers.
+`plan` never sees an encoded size, only `facts.size`, which is what keeps it pure and is why the
+conversion belongs to the caller. Without this a 6.9MB file passes a 7MB cap and the assembled
+message is over it.
+
+## `files=[…]` and what it is not subject to
+
+`extra_files` counts toward `max_parts` and, when the host knows their sizes, toward
+`max_total_bytes`. It is **not** put through the reference refusals: a `files=[…]` path that is
+missing or expiring behaves exactly as it does today. Anything else would break sends that work
+now, and `files=[…]` is the old way in — the new rules apply to the new grammar.
+
+## Existence is checked for all three forms
+
+Including `{{link:}}`, which carries no bytes. A link to a path that does not exist is a link to
+a page that will not open, and the whole point of refusing is that the mail is the review surface.
+
 ## The refusal reasons, in full
 
 Every refusal carries five fields — `reference` (the token verbatim), `path`, `reason`, `where`
@@ -185,18 +241,21 @@ Every refusal carries five fields — `reference` (the token verbatim), `path`, 
     no closing brace on that line
     climbs out of the root              (a leading /, a "..", an id in front)
     is a folder
+    not an image                        ({{inline:}} on something that is not one)
     nested in markdown
     the path expires                    (expires_at is set; copy it to the library, then link)
     too many parts (n of m)
     too large (n of m)
-    changed between stat and fetch
+    gone or resized between stat and fetch
 
-The last one is the window the two-pass design creates and must own: `plan` decides from facts
-gathered by `stat`, and `render_for_mail` fetches afterwards. If a path is gone, truncated or
-rewritten in between, the fetch is the one that notices — and it notices **before** the message
-is handed to the mail service, so it is still a refusal and still nothing sent. An earlier draft
-claimed there was no window because count and read were one pass; the two-pass shape is
-deliberate, so the window is real and named instead.
+The last one is the window the two-pass design creates and must own, and it is named for exactly
+what it can detect. `plan` decides from facts gathered by `stat`; `render_for_mail` fetches
+afterwards. If the path is gone by then, or the bytes it returns are not `facts.size`, the fetch
+refuses — **before** the message reaches the mail service, so nothing is sent. A rewrite that
+lands on the same byte count is **not** detectable at this seam: there is no etag and no version
+in `facts`, the store hands back a whole object so nothing tears, and the mail carries whichever
+version won. That is the honest boundary. Adding an etag to `facts` would close it, and is not
+worth a field until somebody has seen it happen.
 
 ## The limits
 
@@ -208,12 +267,9 @@ build step 5 rather than guessed here.
 
 ## What a refusal says
 
-Nothing is sent. The error carries three things and the call that fixes it:
+Nothing is sent, and **every** bad reference is reported, not the first — a body with three
+mistakes in it should cost one round trip to fix, not three. The call returns a list of refusals,
+each carrying the five fields and the full reason enum given above under *The refusal reasons*.
 
-    reference   the exact token text, braces included
-    path        the path inside it
-    reason      no file at that path | the bytes were never written | not a path |
-                too many parts (n of m) | too large (n of m)
-
-So the person at three in the morning reads which token, in which body, and why — without the
-author, and without opening the message, because there is no message.
+So the person at three in the morning reads which tokens, in which body, on which host, and why —
+without the author, and without opening the message, because there is no message.

@@ -23,8 +23,12 @@ not, this whole finding is wrong and the run should be told.
 
 ## Concurrent writers
 
-A run rewrites `chart.png` while a mail that references it is being built. S3 is read-after-write
-consistent, so the mail gets whichever write finished first, and nothing tears.
+A run rewrites `chart.png` while a mail that references it is being built. The store hands back a
+whole object, so nothing tears — the mail gets one version or the other. Which one depends on the
+two-pass shape: `stat` gathers facts, `fetch` pulls bytes afterwards, and a rewrite in between
+that changes the size is caught and refused (`gone or resized between stat and fetch`). A rewrite
+landing on the same byte count is not detectable at this seam and is simply carried. That is the
+honest boundary, and it is the same sentence in grammar.md and failure_modes.md.
 
 But the three forms behave differently and the difference must be said out loud rather than
 discovered: **`{{path}}` and `{{inline:path}}` copy the bytes into the message, so they freeze
@@ -82,10 +86,12 @@ webhook, a preview inside the studio — `cid:` means nothing there, and if the 
 finished HTML string, that surface would have to parse the braces itself. Two parsers, and they
 drift within a month.
 
-So the seam returns **three things, not a string**: the rewritten body, the files to attach, and
-the files to place inline with the name each placeholder used. The mail builder turns those into
-MIME. Another surface turns the same three into whatever it has. This is the one piece of the
-design that exists for a caller that does not exist yet, and it costs one return type.
+So the design splits three ways. `find_references` is the grammar, and it is the only genuinely
+reusable piece. `plan` is pure mail policy — it returns **pieces**, runs of text and part-markers
+in order, not a body string, so nothing downstream re-parses what an earlier stage wrote.
+`render_for_mail` is the only part that mints a `cid`. An earlier draft had one function return a
+body with `inline:{n}` markers in it, which is `cid:` with a different name on it and would have
+made a second surface parse the body again.
 
 ## The reference that is being shown, not used
 

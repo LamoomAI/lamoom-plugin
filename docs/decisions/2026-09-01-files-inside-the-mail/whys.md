@@ -92,9 +92,11 @@ name shown, and the link that would have died.
    — that is often exactly why it was linked — and a silent substitution makes the writer's
    sentence wrong.
 5. **Why is copy-to-the-library the fix rather than a longer retention?** Because retention is a
-   storage decision with its own costs and this is a delivery problem. The permanent copy is one
-   call, it is what the writer meant when they linked something they wanted kept, and it leaves
-   the retention rules alone.
+   storage decision with its own costs and this is a delivery problem. The copy is one
+   `manage_file copy` with `to_scope`, and the destination's retention wins. **Who makes that call
+   is the writer of the mail**, prompted by the refusal — not the resolver, which reads and never
+   writes, and not the run's close, which may or may not already do it (assumption 0 in the
+   decision document).
 
 **And where this rule stops.** It catches a *scheduled* death, because `expires_at` is knowable at
 send time. It cannot catch a file someone deletes by hand next week — no send-time check can — so

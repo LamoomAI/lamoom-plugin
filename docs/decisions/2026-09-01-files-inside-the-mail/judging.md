@@ -128,3 +128,62 @@ The section now carries the correction rather than a quiet edit, because a docum
 - **A third unverified assumption admitted:** that a run's result reaches the permanent library.
   It is the escape hatch for both the 7MB ceiling and the expiring link, and nothing read here
   says it happens by default.
+
+## Round 4 — minimum 3, and the panel stopping here
+
+| Judge | Score | The sentence that lost the point |
+|---|---|---|
+| implementer | 4 | "A grammar that cannot name a file the product itself created is broken on day one, so the rule is the other way round…" (grammar.md) |
+| architecture-reviewer | 4 | "S3 is read-after-write consistent, so the mail gets whichever write finished first, and nothing tears." (attacks.md) |
+| worst-case-operator | 4 | "If neither says image, the file is **attached instead**, and the caller is told it was attached rather than placed." (grammar.md) |
+| abstraction-owner | 3 | "A second surface — a Slack post, a webhook, a studio preview — reuses `find_references` **and `plan`**, and writes only its own renderer." (grammar.md) |
+| cost-and-pricing-owner | 3 | "So on money the two options tie, and the comparison table scores them both 5 on Cost." (pricing.md) |
+| five-whys-auditor | 3 | "…a run's close already writes what it made into the library, so the permanent copy exists before the mail does." (decision_doc.md) |
+
+## What round 4 changed
+
+- **The last silent failure was removed by reversing a rule.** `{{inline:}}` on a non-image was
+  quietly demoted to an attachment with a note in the return — and the operator pointed out the
+  note goes to an agent that stops existing minutes later, while the person reads the mail after
+  that, which is the exact argument this design uses to *refuse* an expiring link rather than warn
+  about it. It refuses now. That deleted the `notes` channel, which had no other user.
+- **`content_type` was promoted to a checked assumption beside `expires_at`.** The image test
+  turned on it, and it was as unread as the capability that got a build-step check and a "must not
+  be claimed". A store that answers `application/octet-stream` for everything would have demoted
+  every inline image in the product, silently.
+- **The concurrency answer stopped contradicting the refusal.** `facts` has no etag, so a rewrite
+  landing on the same byte count is undetectable at this seam: gone or resized is refused, same
+  size is carried, and both documents now say that same sentence.
+- **The surface-neutrality claim for `plan` was withdrawn.** `plan` takes `extra_files`, which
+  exists only because one caller has a `files?` argument, and its body is mail policy. The
+  genuinely reusable piece is `find_references`, and the split now justifies itself on purity and
+  on what the fixture can pin, which is true, rather than on a second surface, which was not. A
+  second fixture pins `render_for_mail`, the piece written twice if the hosts share nothing.
+- **Both sides of the cost comparison are now counted the same way** — a stat per path and a fetch
+  per part, against a `manage_file get` per reference — and the "100x" is labelled a round number
+  rather than a multiple of a volume nobody measured.
+- **A misparse was retracted.** "more pages True" came from reading the listing's `next` field as
+  a pagination cursor; it is a prose instruction. Whether 1560 files is the whole library is
+  simply unknown, and the counts no longer claim to be floors.
+- **Seven more implementer questions answered:** percent-encoding and bracket-escaping for names
+  with spaces, the cap measured in raw bytes with the encoding headroom taken by the caller,
+  `files=[…]` counted but not subject to the new refusals, existence checked for `{{link:}}` too,
+  all refusals returned rather than the first, and where `render_for_mail` sits relative to the
+  markdown renderer.
+
+## Where the panel was stopped, and what is still open
+
+Four rounds, twenty-four cold readings, minimum 2 → 3 → 2 → 3. The remaining threes are not
+defects in the design; they are three honest limits that more rounds would restate rather than
+remove:
+
+1. **`plan` is one caller's abstraction.** True, and now said so in the document instead of
+   being argued away. It becomes false the day a second surface exists, and not before.
+2. **The cost comparison rests on list prices and an unmeasured volume.** Every input is
+   labelled. The totals are cents at any plausible volume, so no decision here turns on it.
+3. **Three capabilities are assumed, not read** — `expires_at` and `content_type` on stat, and
+   whether a run's close copies its result to the library. All three are the first thing build
+   step 1 checks, and each is named where it is relied on.
+
+A judge that keeps finding the same three named limits is confirming them, not catching them.
+That is the point to stop.

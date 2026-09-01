@@ -63,14 +63,18 @@ Three rules that are not obvious and are the reason this document exists:
   shows what the file becomes.
 - **A `{{link:}}` to a path that expires is refused at send.** A run's own files die 30 days after
   their last write, so such a link is a mail that reads as complete and quietly is not, weeks
-  later. The refusal says to copy it to the library first, then link it — which is also the answer
-  for a result too big to attach: a run's close already writes what it made into the library, so
-  the permanent copy exists before the mail does.
-  **This rule depends on one capability nobody here has read: `stat` returning `expires_at`.** The
-  store holds retention — `manage_file` takes `expire_in` and has `set_expiry` — but that it is
-  visible at stat time is assumed, not verified. Build step 1 checks it first; if it is not
-  exposed, exposing it is the first change, and until then this rule cannot ship and must not be
-  claimed.
+  later. The refusal says to copy it to the library and link that — which is also the answer for a
+  result too big to attach. That copy is one `manage_file copy` with `to_scope`, and the
+  destination's retention wins; **whether a run's close already makes it is assumption 0 below**,
+  so until that is confirmed the copy is a step the writer takes, not one that has already
+  happened.
+  **This rule depends on two capabilities nobody here has read: `stat` returning `expires_at`, and
+  `stat` returning a usable `content_type`.** The
+  The store holds retention — `manage_file` takes `expire_in` and has `set_expiry` — but that
+  either fact is visible at stat time is assumed, not verified. Build step 1 checks both; if
+  expiry is not exposed, exposing it is the first change, and until then this rule cannot ship and
+  must not be claimed. If content type comes back generic for everything, the extension fallback
+  is what actually decides whether a file is an image.
 
 Measured, and the reason `link` is not the polite third option: one page of Kate's library holds
 11 files over 7MB and 14 folders with more than ten files, largest 41.3 MB
@@ -89,7 +93,7 @@ no-op.
 | Class | Change | Its seam |
 |---|---|---|
 | `find_references(body)` | **new** | pure. Body in, `[(span, form, path)]` out. No store, no bytes, no mail. This is the grammar, and it is the piece another surface reuses |
-| `plan(references, facts, limits, extra_files)` | **new** | pure, and this is where the design lives: dedupe, inline-versus-attach precedence, the caps and how `files=[…]` counts toward them, the non-image fallback, the expiry refusal. Returns `Plan(pieces, parts, notes)` or `Refusal(reference, path, reason, where, fix)`. `facts` is one stat per path — existence, size, content type, expiry — gathered by the host without pulling bytes |
+| `plan(references, facts, limits, extra_files)` | **new** | pure, and this is where the design lives: dedupe, inline-versus-attach precedence, the caps and how `files=[…]` counts toward them, the non-image refusal, the expiry refusal. Returns `Plan(pieces, parts)` or **every** refusal it found, each with `(reference, path, reason, where, fix)`. `facts` is one stat per path — existence, size, content type, expiry — gathered by the host without pulling bytes |
 | `render_for_mail(plan, fetch)` | **new** | the join. Fetches the bytes the plan names, builds the MIME, mints the `cid`. The only part that knows it is making a mail |
 | the mail builder | reads those three instead of `body` + `files` | turns attachments and inline parts into MIME. The only place `cid:` exists |
 | `run.email(run_id, subject, body)` | calls the resolver first | signature unchanged |
@@ -180,6 +184,8 @@ day.
 | A8 one path grammar | the exact string returned by a `files` listing, pasted into a body, resolves |
 | A9 nothing unexplained | a fourth form, e.g. `{{cid:path}}`, is refused rather than guessed at |
 
+| `{{inline:}}` on a PDF | refused, reason `not an image`, fix: use `{{path}}`. Never quietly attached — the note would go to an agent that is gone before the mail is read |
+| three bad references in one body | all three are named in one refusal, not the first only |
 | grammar is parseable | `{{ inline:a/b.png }}` and `{{inline:a/b.png}}` resolve the same; `{{2026-09-01: x.md}}` refuses as not-a-path; `{{` with no `}}` on the line refuses; the same path twice makes one part |
 | the link that expires | a `{{link:}}` to a path with a 30-day retention refuses at send, saying to attach it or copy it first |
 

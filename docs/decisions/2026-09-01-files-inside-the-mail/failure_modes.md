@@ -10,11 +10,12 @@ every row: nothing leaves half-sent, and nothing arrives looking complete when i
 | more references in one body than the cap | refused, naming the count and the cap | nothing |
 | the message would exceed what the mail service accepts | refused, naming the total size and which references make it up | nothing |
 | the file exists as a name but the bytes were never PUT (`size 0`) | refused, saying the path is a name with no file behind it | nothing |
-| `{{inline:}}` on something that is not an image | it is attached instead, and the caller is told it was attached rather than placed | the file, attached, and a line that reads normally |
+| `{{inline:}}` on something that is not an image | refused, reason `not an image`, fix: use `{{path}}` | nothing. It is not quietly demoted — the notice would go to an agent that is gone before she reads the mail |
 | the send itself fails after the mail service accepted the message | reported as a send failure, explicitly not a reference failure, and NOT retried automatically | possibly one mail, possibly none |
 | a `{{link:}}` to a path that expires | refused at send, saying to copy it to the library and link that | nothing. The dead link never leaves |
 | a `{{link:}}` to a permanent path that somebody deletes later | nothing — no send-time check can see a future deletion | a dead link. This design narrows the silent dead link; it does not abolish it |
-| a path changed or deleted between `stat` and `fetch` | refused before the message reaches the mail service, reason `changed between stat and fetch` | nothing |
+| a path gone or resized between `stat` and `fetch` | refused before the message reaches the mail service, reason `gone or resized between stat and fetch` | nothing |
+| a path rewritten to exactly the same size between `stat` and `fetch` | nothing — undetectable without an etag, which `facts` does not carry | whichever version won. Named rather than denied |
 | the mail service accepted the message but the call then failed | reported as a send failure, carrying the message id if the service returned one, and NOT retried | possibly one mail, and the message id says which |
 
 Everything except the last row is caught before a mail exists, which is why refusing is cheap.
@@ -31,7 +32,8 @@ than being written out of the table.
 
 Every refusal carries five fields — the token verbatim, the path inside it, the reason, `where`
 (which call, on which host, refused) and the fix — so the person at three in the morning does not
-have to guess which of the two services they are looking at.
+have to guess which of the two services they are looking at. A body with three mistakes returns
+three refusals, not the first one: fixing a body should cost one round trip.
 
 Four states that were unnamed and now are:
 
@@ -39,9 +41,10 @@ Four states that were unnamed and now are:
   unclosed brace is the beginning of a reference somebody meant.
 - **A file changed or deleted between `stat` and `fetch`** — there *is* a window, and it is
   deliberate: facts are gathered without pulling bytes so that a `{{link:}}` never downloads a
-  41.3 MB video to prove it exists. The fetch notices, and it happens before the message reaches
-  the mail service, so it is still a refusal with reason `changed between stat and fetch` and
-  still nothing sent. An earlier draft claimed one pass and no window; that was wrong.
+  41.3 MB video to prove it exists. A path gone by fetch time, or one whose bytes are not
+  `facts.size`, is refused before the message reaches the mail service. A rewrite that lands on
+  exactly the same size is not detectable without an etag and is carried. An earlier draft claimed
+  one pass and no window; that was wrong, and so would be claiming the window is fully closed.
 - **The same path twice** — one part, referenced twice. See grammar.md.
 - **The same path in `files=[…]` and as `{{path}}`** — one part. `files=[…]` is the older,
   positionless way to attach: it puts bytes on the message and nothing in the body. It is not the
