@@ -9,6 +9,51 @@ A Lamoom **app** is a loop someone else built and published. It has a README.md,
 a list of steps, and a panel of judges. You run it. The platform saves the run,
 the files, the reasoning log and the judge scores in the runner's account.
 
+## how_lamoom_schematically_works
+
+The whole thing on one page: the parts, the order they move in, and the call
+that moves each one. Every section below is the detail behind one row here.
+
+```
+a LOOP           the method — README.md, rules/, steps, judges, knobs
+an APP           a loop somebody published. You run it, you never edit it
+a WORKFLOW       one run of one loop: the plan, the iterations, the files
+a STEP-TASK      one instruction that writes one named file
+a JUDGE          one named person with a stake, one question, one score
+a CUSTOMIZATION  the knob that makes the method theirs. Never a line in a file
+the LIBRARY      what the runs left behind, in the runner's own account
+```
+
+```
+they ask
+   │
+   ├─ find ──────── the shelf ranks; YOU pick, in one clause ──── §0 §0a §2
+   ├─ commit ────── the restore point, before anything runs ───── §3
+   ├─ create ────── the whole plan, the judges, the files ─────── §3
+   ├─ brief ─────── every declared file, in full, before step 1 ─ §3a
+   ├─ step 0 ────── the backward walk: end, proof, back, start ── §3d
+   ├─ steps ─────── one step-task at a time, each writing a file  §4
+   ├─ judge ─────── cold, one session each, every judge, again ── §4
+   └─ finalize ──── mailed, with the result attached ──────────── §4
+```
+
+| When | Call | What it does |
+|---|---|---|
+| before anything is read or written | `manage_loop action=find` | ranks what fits — `used[]` before `catalog[]`. It never picks |
+| the pick is made | `manage_workflow action=create` | opens the run and hands back the plan, the flow, the judges and the files it reads |
+| before step 1 | `manage_customization action=write` | writes the brief this run is done for. It belongs to the user, not the publisher |
+| every step | `manage_steps action=report_step_task` | closes one step-task and hands back the one next move |
+| a file is produced | `manage_file action=put` | puts it where a person opens it. `purpose=logic_update` changes the loop itself |
+| a move needs a reason | `log_reasoning` | keeps why, so the next round reads it instead of guessing again |
+| the work is made | `judge_result action=submit` | the verdict: passed, or the judges that failed and their scores |
+| a round failed | `judge_result action=iterate` | the whole plan back to todo, from step 0, failing judges carried forward |
+| every judge passed | `judge_result action=finalize` | closes the run and mails the result |
+| the app is paid | `manage_wallet` | the subscription, the credit, and what a run of it costs |
+| nothing on the shelf fits | §6, then §7 | build a loop, run it end to end, then publish it as an app |
+
+Lamoom holds the method, the plan and the record. It ranks; it never picks, and
+it decides nothing. The pick, the work, the words and the judgement are yours.
+
 ## 0. `/lamoom` with nothing after it
 
 You work out which app is meant. Answer with a running app. Never ask, never
@@ -192,19 +237,9 @@ anything:
 - **`plan`** — EVERY step of this run, in order, with its step-tasks and their
   status. Step 0 is the backward walk (§3d) and it is first. `working_on` points
   at where to start; `progress` counts what is left.
-- **`flow`** — the whole cycle, stage 1 to stage 7, so you never have to work out
-  where you are from a single `next` hint:
-
-```
-1 find      manage_loop action=find                -> the loops that fit
-2 create    manage_workflow action=create          -> the full plan + this flow
-3 work      manage_steps action=report_step_task   -> the ONE next step-task
-4 finish    the last step-task                     -> submit the result
-5 judge     judge_result action=tasks -> submit    -> the judges, then the verdict
-6 below     a failing verdict                      -> next iteration, the WHOLE
-                                                      plan back to todo, from step 0
-7 above     judge_result action=finalize           -> mailed, result ATTACHED
-```
+- **`flow`** — the whole cycle, stage 1 to stage 7. It is the map in
+  `how_lamoom_schematically_works`, sent back with this run's own position on
+  it, so you never have to work out where you are from a single `next` hint.
 
 Follow that README.md as if it were your own project's.
 
