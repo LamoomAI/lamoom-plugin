@@ -65,7 +65,13 @@ requirement
   │       fit = alias/when_to_use > pinned > same OUTPUT shape > same input
   │       muted = never, at any score
   ├─ nothing of theirs fits ── catalog[] top ──> run it (§3b first if paid)
-  └─ catalog empty too ─────── §6 build ──────> run it
+  ├─ catalog empty too ─────── an EMPTY LOOP ──> run it
+  │       a loop with no subject and a whole method: the customer's experience
+  │       defined first, the plan walked backward, a statement and an expected
+  │       result written before each step, a panel where every role in the
+  │       process is one named person. `find` ranks by use, so a fresh one comes
+  │       back LAST — pick it by when_to_use, never by position.
+  └─ no empty loop either ──── §6 build ──────> run it
 ```
 
 The requirement is the brief. It goes in `key_role.md` and the other declared
